@@ -1,0 +1,10 @@
+# Folders
+.metadata/
+.settings/
+bin/
+
+# Files
+.directory
+.project
+
+# Others
