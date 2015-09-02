@@ -1,6 +1,7 @@
 # Folders
 .metadata/
 .settings/
+.recommenders/
 bin/
 
 # Files
