@@ -1,32 +1,48 @@
-/**
- * File:		LabyrinthNode.java
- * Package:		IntelligentSystems.sii20152.miprimeranota.labyrinth.LabyrinthNode
- * Creation:	5/09/2015 at 2:49:16 p. m.
- */
+
 package sii20152.miprimeranota.labyrinth;
 
 class LabyrinthNode
 {
-    public int x;
-    public int y;
-
+    private int x;
+    private int y;
+    
     /**
-     *
+     * New Labyrinth Node at (0,0)
      */
     public LabyrinthNode()
     {
         x = 0;
         y = 0;
     }
-
+    
     /**
+     * New Labyrinth Node at (x,y)
+     *
      * @param x
+     *            The X pos
      * @param y
+     *            The Y pos
      */
     public LabyrinthNode(int x, int y)
     {
         this.x = x;
         this.y = y;
+    }
+    
+    /**
+     * @return the x
+     */
+    public int getX()
+    {
+        return x;
+    }
+
+    /**
+     * @return the y
+     */
+    public int getY()
+    {
+        return y;
     }
 
     /*
@@ -40,7 +56,7 @@ class LabyrinthNode
         final int with = 1000;
         return x + (y * with);
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -62,7 +78,7 @@ class LabyrinthNode
             return false;
         return true;
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -73,7 +89,7 @@ class LabyrinthNode
     {
         return new LabyrinthNode(x, y);
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -84,39 +100,43 @@ class LabyrinthNode
     {
         return "LabyrinthNode [x=" + x + ", y=" + y + "]";
     }
-
+    
     /**
+     * Node immediately in front towards direction
+     *
      * @param direction
+     *            The absolute direction to check (0: North, clockwise)
      */
     public LabyrinthNode forward(int direction)
     {
-        LabyrinthNode newNode = new LabyrinthNode(x, y);
         switch (direction % 4)
         {
             case 0:
             {
-                newNode.y++;
-                break;
+                return new LabyrinthNode(x, y + 1);
             }
             case 1:
             {
-                newNode.x++;
-                break;
+                return new LabyrinthNode(x + 1, y);
             }
             case 2:
             {
-                newNode.y--;
-                break;
+                return new LabyrinthNode(x, y - 1);
             }
             case 3:
             {
-                newNode.x--;
-                break;
+                return new LabyrinthNode(x - 1, y);
             }
         }
-        return newNode;
+        return null; // Unreachable
     }
-
+    
+    /**
+     * Get all the neighbors starting from direction
+     *
+     * @param direction
+     * @return All the neighbors starting from direction
+     */
     public LabyrinthNode[] getNeighbors(int direction)
     {
         LabyrinthNode[] neighbors =
@@ -124,7 +144,12 @@ class LabyrinthNode
                 forward((direction + 3) % 4) };
         return neighbors;
     }
-
+    
+    /**
+     * Get all the neighbors starting from the North
+     *
+     * @return All the neighbors starting from the North
+     */
     public LabyrinthNode[] getNeighbors()
     {
         return getNeighbors(0);

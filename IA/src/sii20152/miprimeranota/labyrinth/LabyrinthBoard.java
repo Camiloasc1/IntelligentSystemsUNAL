@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 /**
  * @author Mi Primera Nota
- *        
+ *
  * @param <N>
  *            Type of the nodes in the board
  */
@@ -15,7 +15,7 @@ class LabyrinthBoard<N extends LabyrinthNode>
     private HashMap<N, Boolean> explored;
     
     /**
-     *
+     * New Labyrinth Board
      */
     public LabyrinthBoard()
     {
@@ -29,28 +29,6 @@ class LabyrinthBoard<N extends LabyrinthNode>
     public HashMap<N, HashMap<N, Float>> getBoard()
     {
         return board;
-    }
-    
-    /**
-     * @param n1
-     * @param n2
-     * @param weight
-     */
-    public void walkThrough(N n1, N n2)
-    {
-        addWay(n1, n2);
-        
-        // if (getLink(n1, n2) < 0)
-        // {
-        // board.get(n1).put(n2, 0.0f);
-        // }
-        board.get(n1).put(n2, getLink(n1, n2) + 1);
-        
-        // if (getLink(n2, n1) < 0)
-        // {
-        // board.get(n2).put(n1, 0.0f);
-        // }
-        board.get(n2).put(n1, getLink(n2, n1) + 1);
     }
     
     /**
@@ -77,6 +55,28 @@ class LabyrinthBoard<N extends LabyrinthNode>
         {
             board.get(n2).put(n1, 0.0f);
         }
+    }
+    
+    /**
+     * @param n1
+     * @param n2
+     * @param weight
+     */
+    public void walkThrough(N n1, N n2)
+    {
+        addWay(n1, n2);
+        
+        // if (getLink(n1, n2) < 0)
+        // {
+        // board.get(n1).put(n2, 0.0f);
+        // }
+        board.get(n1).put(n2, getLink(n1, n2) + 1);
+        
+        // if (getLink(n2, n1) < 0)
+        // {
+        // board.get(n2).put(n1, 0.0f);
+        // }
+        board.get(n2).put(n1, getLink(n2, n1) + 1);
     }
     
     /**
