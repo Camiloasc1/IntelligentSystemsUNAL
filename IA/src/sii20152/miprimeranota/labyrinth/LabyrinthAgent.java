@@ -112,7 +112,6 @@ public class LabyrinthAgent implements AgentProgram
      */
     public void exploration(boolean[] W, boolean[] A, boolean[] O, boolean GR)
     {
-        
         int targetDirection = findNearestUnexplored(W, A, O, GR);
         
         if ((targetDirection != -1) && !O[targetDirection])
@@ -128,36 +127,6 @@ public class LabyrinthAgent implements AgentProgram
         {
             System.out.println("ERROR (mapa accesible ya explorado)");
         }
-        
-        LabyrinthNode[] neighbors = currentPos.getNeighbors(direction);
-        
-        int min = -1;
-        float minVal = Float.POSITIVE_INFINITY;
-        for (int i = 0; i < neighbors.length; i++)
-        {
-            if (!O[i] && board.isConnected(currentPos, neighbors[i]) && (board.getLink(currentPos, neighbors[i]) < minVal))
-            {
-                min = i;
-                minVal = board.getLink(currentPos, neighbors[i]);
-            }
-        }
-        
-        if (min != -1)
-        {
-            if (!O[min])
-            {
-                for (int i = 0; i < min; i++)
-                {
-                    actionsQueue.add(Actions.ROTATE.getAction());
-                }
-                actionsQueue.add(Actions.ADVANCE.getAction());
-            }
-            return;
-        }
-        if (DEBUG)
-        {
-            System.out.println("ERROR (encerrado)");
-        }
 
         rightHandOnWall(W, A, O, GR);
         return;
@@ -167,6 +136,11 @@ public class LabyrinthAgent implements AgentProgram
     {
         HashMap<LabyrinthNode, Integer> dir = new HashMap<LabyrinthNode, Integer>();
         HashMap<LabyrinthNode, Boolean> visited = new HashMap<LabyrinthNode, Boolean>();
+        
+        long currentTimeMillis = System.currentTimeMillis();
+        long maxVal = 0;
+        LabyrinthNode max = null;
+        long lastExplored;
         
         for (LabyrinthNode n : board.getBoard().keySet())
         {
@@ -184,7 +158,8 @@ public class LabyrinthAgent implements AgentProgram
             {
                 if (!O[i])
                 {
-                    if (!board.isExplored(neighbors[i])) // Unexplored pos
+                    lastExplored = currentTimeMillis - board.getExplored(neighbors[i]);
+                    if (lastExplored == currentTimeMillis) // Unexplored pos
                     {
                         if (DEBUG)
                         {
@@ -192,13 +167,18 @@ public class LabyrinthAgent implements AgentProgram
                         }
                         return i;
                     }
+                    if (lastExplored > maxVal)
+                    {
+                        maxVal = lastExplored;
+                        max = neighbors[i];
+                    }
                     dir.put(neighbors[i], i);
                     visited.put(neighbors[i], true);
                     queue.add(neighbors[i]);
                 }
             }
         }
-        
+
         while (!queue.isEmpty())
         {
             LabyrinthNode n = queue.remove();
@@ -206,7 +186,8 @@ public class LabyrinthAgent implements AgentProgram
             {
                 if (!visited.get(m))
                 {
-                    if (!board.isExplored(m)) // Unexplored pos
+                    lastExplored = currentTimeMillis - board.getExplored(m);
+                    if (lastExplored == currentTimeMillis) // Unexplored pos
                     {
                         if (DEBUG)
                         {
@@ -214,13 +195,23 @@ public class LabyrinthAgent implements AgentProgram
                         }
                         return dir.get(n);
                     }
+                    if (lastExplored > maxVal)
+                    {
+                        maxVal = lastExplored;
+                        max = m;
+                    }
                     dir.put(m, dir.get(n));
                     visited.put(m, true);
                     queue.add(m);
                 }
             }
         }
-        return -1;
+        
+        if (DEBUG)
+        {
+            System.out.println("Target(3): " + max + " : " + maxVal);
+        }
+        return dir.get(max);
     }
 
     /**
@@ -287,13 +278,12 @@ public class LabyrinthAgent implements AgentProgram
         }
         if (Actions.compare(actionsQueue.element(), Actions.ADVANCE.getAction()))
         {
-            // The graph becomes useless when a movement fails
+            // The graph becomes useless (out of sync) when a movement fails
             LabyrinthNode newPos = currentPos.forward(direction);
-            board.walkThrough(currentPos, newPos);
             if (DEBUG)
             {
-                System.out.println("Movement : " + currentPos + " -(" + direction + ", " + board.getLink(currentPos, newPos)
-                        + ")> " + newPos);
+                System.out.println(
+                        "Movement : " + currentPos + " -(" + direction + ", " + board.getExplored(newPos) + ")> " + newPos);
             }
             currentPos = newPos;
         }

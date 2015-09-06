@@ -5,7 +5,7 @@ class LabyrinthNode
 {
     private int x;
     private int y;
-    
+
     /**
      * New Labyrinth Node at (0,0)
      */
@@ -14,7 +14,7 @@ class LabyrinthNode
         x = 0;
         y = 0;
     }
-    
+
     /**
      * New Labyrinth Node at (x,y)
      *
@@ -28,7 +28,7 @@ class LabyrinthNode
         this.x = x;
         this.y = y;
     }
-    
+
     /**
      * @return the x
      */
@@ -36,7 +36,7 @@ class LabyrinthNode
     {
         return x;
     }
-
+    
     /**
      * @return the y
      */
@@ -44,7 +44,7 @@ class LabyrinthNode
     {
         return y;
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -56,7 +56,7 @@ class LabyrinthNode
         final int with = 1000;
         return x + (y * with);
     }
-    
+
     /*
      * (non-Javadoc)
      *
@@ -78,7 +78,7 @@ class LabyrinthNode
             return false;
         return true;
     }
-    
+
     /*
      * (non-Javadoc)
      *
@@ -89,7 +89,7 @@ class LabyrinthNode
     {
         return new LabyrinthNode(x, y);
     }
-    
+
     /*
      * (non-Javadoc)
      *
@@ -100,12 +100,11 @@ class LabyrinthNode
     {
         return "LabyrinthNode [x=" + x + ", y=" + y + "]";
     }
-    
+
     /**
-     * Node immediately in front towards direction
-     *
      * @param direction
      *            The absolute direction to check (0: North, clockwise)
+     * @return The node immediately in front towards direction
      */
     public LabyrinthNode forward(int direction)
     {
@@ -130,10 +129,8 @@ class LabyrinthNode
         }
         return null; // Unreachable
     }
-    
+
     /**
-     * Get all the neighbors starting from direction
-     *
      * @param direction
      * @return All the neighbors starting from direction
      */
@@ -144,10 +141,8 @@ class LabyrinthNode
                 forward((direction + 3) % 4) };
         return neighbors;
     }
-    
+
     /**
-     * Get all the neighbors starting from the North
-     *
      * @return All the neighbors starting from the North
      */
     public LabyrinthNode[] getNeighbors()

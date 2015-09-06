@@ -22,26 +22,26 @@ public class MultiTeseoMain
         { "front", "right", "back", "left", "exit", "afront", "aright", "aback", "aleft" }, new String[]
         { "no_op", "die", "advance", "rotate" });
     }
-    
+
     public static void main(String[] argv)
     {
         AgentProgram[] teseo = new AgentProgram[4];
         int index1 = 0;
-        int index2 = 2;
+        int index2 = 1;
         teseo[0] = new LabyrinthAgent(getLanguage());
         teseo[1] = new LabyrinthAgent(getLanguage());
         teseo[2] = new RandomReflexTeseo();
         ((RandomReflexTeseo) teseo[2]).setLanguage(getLanguage());
         teseo[3] = new RandomReflexTeseo();
         ((RandomReflexTeseo) teseo[3]).setLanguage(getLanguage());
-        
+
         LabyrinthDrawer.DRAW_AREA_SIZE = 600;
         LabyrinthDrawer.CELL_SIZE = 40;
         Labyrinth.DEFAULT_SIZE = 15;
-        
+
         Agent agent1 = new Agent(teseo[index1]);
         Agent agent2 = new Agent(teseo[index2]);
-        
+
         // Agent agent3 = new Agent(p3);
         Vector<Agent> agent = new Vector<Agent>();
         agent.add(agent1);
