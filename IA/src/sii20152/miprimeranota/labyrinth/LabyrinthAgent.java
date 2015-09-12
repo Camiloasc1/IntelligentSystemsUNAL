@@ -63,15 +63,16 @@ public class LabyrinthAgent implements AgentProgram
     public Action compute(Percept p)
     {
         boolean GR = Perceptions.GOALREACHED.getBooleanPerception(p);
-
+        
         if (GR) // No more to do...
             return Actions.NOP.getAction();
-
+            
         boolean[] W =
         { Perceptions.WFRONT.getBooleanPerception(p), Perceptions.WRIGHT.getBooleanPerception(p),
                 Perceptions.WBACK.getBooleanPerception(p), Perceptions.WLEFT.getBooleanPerception(p) };
-
+                
         boolean[] A =
+        // { false, false, false, false };
         { Perceptions.AFRONT.getBooleanPerception(p), Perceptions.ARIGHT.getBooleanPerception(p),
                 Perceptions.ABACK.getBooleanPerception(p), Perceptions.ALEFT.getBooleanPerception(p) };
 
@@ -84,23 +85,23 @@ public class LabyrinthAgent implements AgentProgram
             // Recalculate
             actionsQueue.clear();
         }
-
+        
         // Pre Exploration
         exploreCurrentPos(W, A, O, GR);
-
+        
         if (actionsQueue.isEmpty()) // Calculate actions
         {
             // Exploration
             exploration(W, A, O, GR);
         }
-
+        
         // ...
         if (actionsQueue.isEmpty())
             return Actions.NOP.getAction();
-
+            
         // Post Exploration
         updateCurrentPos(W, A, O, GR);
-
+        
         return actionsQueue.remove();
     }
 
@@ -211,7 +212,7 @@ public class LabyrinthAgent implements AgentProgram
         {
             System.out.println("Target(3): " + max + " : " + maxVal);
         }
-        return dir.get(max);
+        return max == null ? null : dir.get(max);
     }
 
     /**
