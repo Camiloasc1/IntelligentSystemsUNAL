@@ -15,14 +15,15 @@ import unalcol.agents.simulate.util.SimpleLanguage;
  */
 public class LabyrinthAgent implements AgentProgram
 {
-    static boolean DEBUG = false;
+    static boolean DEBUG = true;
 
     private Queue<Action> actionsQueue;
-    
+    private Action lastAction;
+
     private LabyrinthBoard<LabyrinthNode> board;
     private int direction;
     private LabyrinthNode currentPos;
-    
+
     /**
      * @param language
      */
@@ -31,14 +32,15 @@ public class LabyrinthAgent implements AgentProgram
         super();
         Actions.language = language;
         Perceptions.language = language;
-        
+
         actionsQueue = new LinkedList<Action>();
+        lastAction = null;
 
         board = new LabyrinthBoard<LabyrinthNode>();
         direction = 0;
         currentPos = new LabyrinthNode(0, 0);
     }
-    
+
     /*
      * (non-Javadoc)
      *
@@ -48,12 +50,12 @@ public class LabyrinthAgent implements AgentProgram
     public void init()
     {
         actionsQueue.clear();
-        
+
         board = new LabyrinthBoard<LabyrinthNode>();
         direction = 0;
         currentPos = new LabyrinthNode(0, 0);
     }
-    
+
     /*
      * (non-Javadoc)
      *
@@ -63,14 +65,15 @@ public class LabyrinthAgent implements AgentProgram
     public Action compute(Percept p)
     {
         boolean GR = Perceptions.GOALREACHED.getBooleanPerception(p);
-        
+        boolean F = Perceptions.FAIL.getBooleanPerception(p);
+
         if (GR) // No more to do...
             return Actions.NOP.getAction();
-            
+
         boolean[] W =
         { Perceptions.WFRONT.getBooleanPerception(p), Perceptions.WRIGHT.getBooleanPerception(p),
                 Perceptions.WBACK.getBooleanPerception(p), Perceptions.WLEFT.getBooleanPerception(p) };
-                
+
         boolean[] A =
         // { false, false, false, false };
         { Perceptions.AFRONT.getBooleanPerception(p), Perceptions.ARIGHT.getBooleanPerception(p),
@@ -78,31 +81,37 @@ public class LabyrinthAgent implements AgentProgram
 
         boolean[] O =
         { W[0] || A[0], W[1] || A[1], W[2] || A[2], W[3] || A[3] };
-        
+
         // Don't hit the wall
         if (!actionsQueue.isEmpty() && O[0] && Actions.compare(actionsQueue.element(), Actions.ADVANCE.getAction()))
         {
             // Recalculate
             actionsQueue.clear();
         }
-        
+        // Fail
+        if (F)
+        {
+            // Recalculates
+            actionsQueue.clear();
+        }
+
         // Pre Exploration
-        exploreCurrentPos(W, A, O, GR);
-        
+        updateCurrentPos(W, A, O, GR, F);
+        exploreCurrentPos(W, A, O, GR, F);
+
         if (actionsQueue.isEmpty()) // Calculate actions
         {
             // Exploration
-            exploration(W, A, O, GR);
+            exploration(W, A, O, GR, F);
         }
-        
+
         // ...
         if (actionsQueue.isEmpty())
             return Actions.NOP.getAction();
-            
+
         // Post Exploration
-        updateCurrentPos(W, A, O, GR);
-        
-        return actionsQueue.remove();
+
+        return (lastAction = actionsQueue.remove());
     }
 
     /**
@@ -111,10 +120,10 @@ public class LabyrinthAgent implements AgentProgram
      * @param O
      * @param GR
      */
-    public void exploration(boolean[] W, boolean[] A, boolean[] O, boolean GR)
+    public void exploration(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
-        int targetDirection = findNearestUnexplored(W, A, O, GR);
-        
+        int targetDirection = findNearestUnexplored(W, A, O, GR, F);
+
         if ((targetDirection != -1) && !O[targetDirection])
         {
             for (int i = 0; i < targetDirection; i++)
@@ -129,29 +138,29 @@ public class LabyrinthAgent implements AgentProgram
             System.out.println("ERROR (mapa accesible ya explorado)");
         }
 
-        rightHandOnWall(W, A, O, GR);
+        rightHandOnWall(W, A, O, GR, F);
         return;
     }
-    
-    public int findNearestUnexplored(boolean[] W, boolean[] A, boolean[] O, boolean GR)
+
+    public int findNearestUnexplored(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
         HashMap<LabyrinthNode, Integer> dir = new HashMap<LabyrinthNode, Integer>();
         HashMap<LabyrinthNode, Boolean> visited = new HashMap<LabyrinthNode, Boolean>();
-        
+
         long currentTimeMillis = System.currentTimeMillis();
         long maxVal = 0;
         LabyrinthNode max = null;
         long lastExplored;
-        
+
         for (LabyrinthNode n : board.getBoard().keySet())
         {
             dir.put(n, -1);
             visited.put(n, false);
         }
-        
+
         dir.put(currentPos, 0);
         visited.put(currentPos, true);
-        
+
         Queue<LabyrinthNode> queue = new LinkedList<LabyrinthNode>();
         {
             LabyrinthNode[] neighbors = currentPos.getNeighbors(direction);
@@ -207,12 +216,12 @@ public class LabyrinthAgent implements AgentProgram
                 }
             }
         }
-        
+
         if (DEBUG)
         {
             System.out.println("Target(3): " + max + " : " + maxVal);
         }
-        return max == null ? null : dir.get(max);
+        return max == null ? -1 : dir.get(max);
     }
 
     /**
@@ -221,7 +230,7 @@ public class LabyrinthAgent implements AgentProgram
      * @param O
      * @param GR
      */
-    public void rightHandOnWall(boolean[] W, boolean[] A, boolean[] O, boolean GR)
+    public void rightHandOnWall(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
         if (!O[1])
         {
@@ -251,7 +260,7 @@ public class LabyrinthAgent implements AgentProgram
         }
     }
 
-    public void exploreCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR)
+    public void exploreCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
         for (int i = 0; i < W.length; i++)
         {
@@ -267,9 +276,19 @@ public class LabyrinthAgent implements AgentProgram
         board.explore(currentPos);
     }
 
-    public void updateCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR)
+    public void updateCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
-        if (Actions.compare(actionsQueue.element(), Actions.ROTATE.getAction()))
+        if (lastAction == null)
+            return;
+        if (F)
+        {
+            if (DEBUG)
+            {
+                System.out.println("Fail: " + currentPos + "(" + direction + ")");
+            }
+            return;
+        }
+        if (Actions.compare(lastAction, Actions.ROTATE.getAction()))
         {
             direction = (direction + 1) % 4;
             if (DEBUG)
@@ -277,9 +296,8 @@ public class LabyrinthAgent implements AgentProgram
                 System.out.println("Rotation: to -> " + direction);
             }
         }
-        if (Actions.compare(actionsQueue.element(), Actions.ADVANCE.getAction()))
+        if (Actions.compare(lastAction, Actions.ADVANCE.getAction()))
         {
-            // The graph becomes useless (out of sync) when a movement fails
             LabyrinthNode newPos = currentPos.forward(direction);
             if (DEBUG)
             {
@@ -289,5 +307,5 @@ public class LabyrinthAgent implements AgentProgram
             currentPos = newPos;
         }
     }
-    
+
 }
