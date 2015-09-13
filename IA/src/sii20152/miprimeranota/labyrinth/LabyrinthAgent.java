@@ -1,9 +1,10 @@
 
 package sii20152.miprimeranota.labyrinth;
 
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.PriorityQueue;
 
 import unalcol.agents.Action;
 import unalcol.agents.AgentProgram;
@@ -15,15 +16,15 @@ import unalcol.agents.simulate.util.SimpleLanguage;
  */
 public class LabyrinthAgent implements AgentProgram
 {
-    static boolean DEBUG = true;
-
-    private Queue<Action> actionsQueue;
+    static boolean DEBUG = false;
+    
+    private Deque<Action> actionsQueue;
     private Action lastAction;
-
+    
     private LabyrinthBoard<LabyrinthNode> board;
-    private int direction;
+    private int currentDir;
     private LabyrinthNode currentPos;
-
+    
     /**
      * @param language
      */
@@ -32,15 +33,15 @@ public class LabyrinthAgent implements AgentProgram
         super();
         Actions.language = language;
         Perceptions.language = language;
-
+        
         actionsQueue = new LinkedList<Action>();
         lastAction = null;
-
+        
         board = new LabyrinthBoard<LabyrinthNode>();
-        direction = 0;
+        currentDir = 0;
         currentPos = new LabyrinthNode(0, 0);
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -50,12 +51,12 @@ public class LabyrinthAgent implements AgentProgram
     public void init()
     {
         actionsQueue.clear();
-
+        
         board = new LabyrinthBoard<LabyrinthNode>();
-        direction = 0;
+        currentDir = 0;
         currentPos = new LabyrinthNode(0, 0);
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -66,22 +67,22 @@ public class LabyrinthAgent implements AgentProgram
     {
         boolean GR = Perceptions.GOALREACHED.getBooleanPerception(p);
         boolean F = Perceptions.FAIL.getBooleanPerception(p);
-
+        
         if (GR) // No more to do...
             return Actions.NOP.getAction();
-
+            
         boolean[] W =
         { Perceptions.WFRONT.getBooleanPerception(p), Perceptions.WRIGHT.getBooleanPerception(p),
                 Perceptions.WBACK.getBooleanPerception(p), Perceptions.WLEFT.getBooleanPerception(p) };
-
+                
         boolean[] A =
         // { false, false, false, false };
         { Perceptions.AFRONT.getBooleanPerception(p), Perceptions.ARIGHT.getBooleanPerception(p),
                 Perceptions.ABACK.getBooleanPerception(p), Perceptions.ALEFT.getBooleanPerception(p) };
-
+                
         boolean[] O =
         { W[0] || A[0], W[1] || A[1], W[2] || A[2], W[3] || A[3] };
-
+        
         // Don't hit the wall
         if (!actionsQueue.isEmpty() && O[0] && Actions.compare(actionsQueue.element(), Actions.ADVANCE.getAction()))
         {
@@ -94,143 +95,147 @@ public class LabyrinthAgent implements AgentProgram
             // Recalculates
             actionsQueue.clear();
         }
-
+        
         // Pre Exploration
         updateCurrentPos(W, A, O, GR, F);
         exploreCurrentPos(W, A, O, GR, F);
-
+        
         if (actionsQueue.isEmpty()) // Calculate actions
         {
             // Exploration
             exploration(W, A, O, GR, F);
         }
-
+        
         // ...
         if (actionsQueue.isEmpty())
             return Actions.NOP.getAction();
-
+            
         // Post Exploration
-
+        
         return (lastAction = actionsQueue.remove());
     }
-
+    
     /**
      * @param W
      * @param A
      * @param O
      * @param GR
      */
-    public void exploration(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
+    private void exploration(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
-        int targetDirection = findNearestUnexplored(W, A, O, GR, F);
-
-        if ((targetDirection != -1) && !O[targetDirection])
-        {
-            for (int i = 0; i < targetDirection; i++)
-            {
-                actionsQueue.add(Actions.ROTATE.getAction());
-            }
-            actionsQueue.add(Actions.ADVANCE.getAction());
+        if (findNearestUnexplored(W, A, O, GR, F))
             return;
-        }
         if (DEBUG)
         {
-            System.out.println("ERROR (mapa accesible ya explorado)");
+            System.out.println("ERROR (Encerrado)");
         }
 
         rightHandOnWall(W, A, O, GR, F);
         return;
     }
-
-    public int findNearestUnexplored(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
+    
+    private boolean findNearestUnexplored(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
-        HashMap<LabyrinthNode, Integer> dir = new HashMap<LabyrinthNode, Integer>();
-        HashMap<LabyrinthNode, Boolean> visited = new HashMap<LabyrinthNode, Boolean>();
-
+        HashMap<LabyrinthNode, LabyrinthNode> parent = new HashMap<LabyrinthNode, LabyrinthNode>();
+        HashMap<LabyrinthNode, Integer> absDir = new HashMap<LabyrinthNode, Integer>();
+        HashMap<LabyrinthNode, Integer> localDir = new HashMap<LabyrinthNode, Integer>();
+        HashMap<LabyrinthNode, Integer> dist = new HashMap<LabyrinthNode, Integer>();
+        
         long currentTimeMillis = System.currentTimeMillis();
-        long maxVal = 0;
-        LabyrinthNode max = null;
-        long lastExplored;
-
+        long exploredDelta;
+        long targetVal = 0;
+        LabyrinthNode target = null;
+        
         for (LabyrinthNode n : board.getBoard().keySet())
         {
-            dir.put(n, -1);
-            visited.put(n, false);
+            parent.put(n, null);
+            absDir.put(n, -1);
+            localDir.put(n, -1);
+            dist.put(n, -1);
         }
-
-        dir.put(currentPos, 0);
-        visited.put(currentPos, true);
-
-        Queue<LabyrinthNode> queue = new LinkedList<LabyrinthNode>();
-        {
-            LabyrinthNode[] neighbors = currentPos.getNeighbors(direction);
-            for (int i = 0; i < neighbors.length; i++)
-            {
-                if (!O[i])
-                {
-                    lastExplored = currentTimeMillis - board.getExplored(neighbors[i]);
-                    if (lastExplored == currentTimeMillis) // Unexplored pos
-                    {
-                        if (DEBUG)
-                        {
-                            System.out.println("Target(1): " + neighbors[i]);
-                        }
-                        return i;
-                    }
-                    if (lastExplored > maxVal)
-                    {
-                        maxVal = lastExplored;
-                        max = neighbors[i];
-                    }
-                    dir.put(neighbors[i], i);
-                    visited.put(neighbors[i], true);
-                    queue.add(neighbors[i]);
-                }
-            }
-        }
-
+        
+        parent.put(currentPos, currentPos);
+        absDir.put(currentPos, currentDir);
+        localDir.put(currentPos, 0);
+        dist.put(currentPos, 0);
+        
+        PriorityQueue<LabyrinthNode> queue = new PriorityQueue<LabyrinthNode>(new NodeComparator(dist));
+        queue.add(currentPos);
+        
         while (!queue.isEmpty())
         {
             LabyrinthNode n = queue.remove();
-            for (LabyrinthNode m : board.getBoard().get(n).keySet())
+            // for (LabyrinthNode m : board.getBoard().get(n).keySet())
+            LabyrinthNode[] neighbors = n.getNeighbors(absDir.get(n));
+            for (int i = 0; i < neighbors.length; i++)
             {
-                if (!visited.get(m))
+                if ((n == currentPos) && O[i])
                 {
-                    lastExplored = currentTimeMillis - board.getExplored(m);
-                    if (lastExplored == currentTimeMillis) // Unexplored pos
+                    continue;
+                }
+                LabyrinthNode m = neighbors[i];
+                if (board.isConnected(n, m) && (parent.get(m) == null))
+                {
+                    parent.put(m, n);
+                    absDir.put(m, (absDir.get(n) + i) % 4);
+                    localDir.put(m, i);
+                    dist.put(m, dist.get(n) + i + 1);
+                    queue.add(m);
+                    
+                    exploredDelta = currentTimeMillis - board.getExplored(m);
+                    if (exploredDelta == currentTimeMillis) // Unexplored pos
                     {
                         if (DEBUG)
                         {
-                            System.out.println("Target(2): " + m);
+                            System.out.println("Target(" + dist.get(m) + "): " + m);
                         }
-                        return dir.get(n);
+                        parentRoute(parent, localDir, m);
+                        return true;
                     }
-                    if (lastExplored > maxVal)
+                    if (exploredDelta > targetVal)
                     {
-                        maxVal = lastExplored;
-                        max = m;
+                        targetVal = exploredDelta;
+                        target = m;
                     }
-                    dir.put(m, dir.get(n));
-                    visited.put(m, true);
-                    queue.add(m);
                 }
             }
         }
-
+        parent.put(currentPos, null);
+        
         if (DEBUG)
         {
-            System.out.println("Target(3): " + max + " : " + maxVal);
+            System.out.println("Target(" + dist.get(target) + "): " + target);
         }
-        return max == null ? -1 : dir.get(max);
+        
+        parentRoute(parent, localDir, target);
+        return target != null;
     }
-
+    
+    private void parentRoute(HashMap<LabyrinthNode, LabyrinthNode> parent, HashMap<LabyrinthNode, Integer> dir,
+            LabyrinthNode target)
+    {
+        if (target == null)
+            return;
+        int localDir = dir.get(parent.get(target));
+        while (target != currentPos)
+        {
+            actionsQueue.addFirst(Actions.ADVANCE.getAction());
+            for (int i = 0; i < dir.get(target); i++)
+            {
+                actionsQueue.addFirst(Actions.ROTATE.getAction());
+                localDir = ++localDir % 4;
+            }
+            target = parent.get(target);
+        }
+    }
+    
     /**
      * @param W
      * @param A
      * @param O
      * @param GR
      */
-    public void rightHandOnWall(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
+    private void rightHandOnWall(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
         if (!O[1])
         {
@@ -259,24 +264,38 @@ public class LabyrinthAgent implements AgentProgram
             actionsQueue.add(Actions.ROTATE.getAction());
         }
     }
-
-    public void exploreCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
+    
+    /**
+     * @param W
+     * @param A
+     * @param O
+     * @param GR
+     * @param F
+     */
+    private void exploreCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
         for (int i = 0; i < W.length; i++)
         {
             if (W[i])
             {
-                board.addWall(currentPos, currentPos.forward((direction + i) % 4));
+                board.addWall(currentPos, currentPos.forward((currentDir + i) % 4));
             }
             else
             {
-                board.addWay(currentPos, currentPos.forward((direction + i) % 4));
+                board.addWay(currentPos, currentPos.forward((currentDir + i) % 4));
             }
         }
         board.explore(currentPos);
     }
-
-    public void updateCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
+    
+    /**
+     * @param W
+     * @param A
+     * @param O
+     * @param GR
+     * @param F
+     */
+    private void updateCurrentPos(boolean[] W, boolean[] A, boolean[] O, boolean GR, boolean F)
     {
         if (lastAction == null)
             return;
@@ -284,28 +303,28 @@ public class LabyrinthAgent implements AgentProgram
         {
             if (DEBUG)
             {
-                System.out.println("Fail: " + currentPos + "(" + direction + ")");
+                System.out.println("Fail: " + currentPos + "(" + currentDir + ")");
             }
             return;
         }
         if (Actions.compare(lastAction, Actions.ROTATE.getAction()))
         {
-            direction = (direction + 1) % 4;
+            currentDir = (currentDir + 1) % 4;
             if (DEBUG)
             {
-                System.out.println("Rotation: to -> " + direction);
+                System.out.println("Rotation: to -> " + currentDir);
             }
         }
         if (Actions.compare(lastAction, Actions.ADVANCE.getAction()))
         {
-            LabyrinthNode newPos = currentPos.forward(direction);
+            LabyrinthNode newPos = currentPos.forward(currentDir);
             if (DEBUG)
             {
                 System.out.println(
-                        "Movement : " + currentPos + " -(" + direction + ", " + board.getExplored(newPos) + ")> " + newPos);
+                        "Movement : " + currentPos + " -(" + currentDir + ", " + board.getExplored(newPos) + ")> " + newPos);
             }
             currentPos = newPos;
         }
     }
-
+    
 }
