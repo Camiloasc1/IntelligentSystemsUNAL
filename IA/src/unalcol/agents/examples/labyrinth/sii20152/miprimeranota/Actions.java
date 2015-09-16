@@ -1,5 +1,5 @@
 
-package sii20152.miprimeranota.labyrinth;
+package unalcol.agents.examples.labyrinth.sii20152.miprimeranota;
 
 import unalcol.agents.Action;
 import unalcol.agents.simulate.util.SimpleLanguage;

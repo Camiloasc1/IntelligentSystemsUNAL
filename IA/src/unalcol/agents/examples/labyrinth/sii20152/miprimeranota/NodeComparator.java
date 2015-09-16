@@ -4,7 +4,7 @@
  * Creation: 12/09/2015 at 7:45:25 p. m.
  */
 
-package sii20152.miprimeranota.labyrinth;
+package unalcol.agents.examples.labyrinth.sii20152.miprimeranota;
 
 import java.util.Comparator;
 import java.util.HashMap;
