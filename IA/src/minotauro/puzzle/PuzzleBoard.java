@@ -67,27 +67,6 @@ public class PuzzleBoard
     }
 
     /**
-     * @param x
-     * @param y
-     * @return The value at (x,y)
-     */
-    public int get(int x, int y)
-    {
-        return board[convert(x, y)];
-    }
-
-    /**
-     * @param x
-     * @param y
-     * @param value
-     *            Value to set at (x,y)
-     */
-    private void set(int x, int y, int value)
-    {
-        board[convert(x, y)] = value;
-    }
-
-    /**
      * @param direction
      * @return True if movement was done
      */
@@ -246,5 +225,4 @@ public class PuzzleBoard
         }
         return str;
     }
-
 }
