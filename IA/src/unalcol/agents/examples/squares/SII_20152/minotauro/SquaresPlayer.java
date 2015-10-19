@@ -14,12 +14,12 @@ import unalcol.types.collection.vector.Vector;
 public class SquaresPlayer implements AgentProgram
 {
     protected String color;
-    
+
     public SquaresPlayer(String color)
     {
         this.color = color;
     }
-    
+
     @Override
     public void init()
     {
@@ -38,7 +38,11 @@ public class SquaresPlayer implements AgentProgram
             // catch (Exception e)
             // {
             // }
+            Board b = new Board(p);
+            if (b.isFull())
+                return new Action(Squares.PASS);
         }
+        Board b = new Board(p);
         int size = Integer.parseInt((String) p.getAttribute(Squares.SIZE));
         int x = 0;
         int y = 0;
@@ -65,9 +69,7 @@ public class SquaresPlayer implements AgentProgram
             }
         }
         String act = x + ":" + y + ":" + v.get((int) (Math.random() * v.size()));
-        // System.out.println(color + " " + act + " " + System.currentTimeMillis());
         return new Action(act);
-        // return new Action(Squares.PASS);
     }
 
 }
