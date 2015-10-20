@@ -9,7 +9,7 @@ import unalcol.agents.simulate.util.SimpleLanguage;
  * Wrapper for the agent's perceptions
  *
  * @author Minotauro
- *
+ *        
  */
 enum Perceptions
 {
@@ -18,10 +18,10 @@ enum Perceptions
     B_TIME(Squares.BLACK + "_" + Squares.TIME),
     SIZE(Squares.SIZE),
     BOX("");
-
+    
     public static SimpleLanguage language;
     private String query;
-
+    
     /**
      * @param query
      */
@@ -29,7 +29,7 @@ enum Perceptions
     {
         this.query = query;
     }
-
+    
     /**
      * @param p
      * @return
@@ -38,7 +38,7 @@ enum Perceptions
     {
         return p.getAttribute(query);
     }
-
+    
     /**
      * @param p
      * @return
@@ -47,7 +47,7 @@ enum Perceptions
     {
         return ((Boolean) getPerception(p)).booleanValue();
     }
-
+    
     /**
      * @param p
      * @return
@@ -56,7 +56,7 @@ enum Perceptions
     {
         return (String) getPerception(p);
     }
-
+    
     /**
      * @param p
      * @return
@@ -65,7 +65,7 @@ enum Perceptions
     {
         return Integer.valueOf(getStringPerception(p));
     }
-
+    
     /**
      * @param p
      * @param x
@@ -81,6 +81,14 @@ enum Perceptions
                 ((String) p.getAttribute(x + ":" + y + ":" + Squares.BOTTOM)).equals(Squares.TRUE),
                 ((String) p.getAttribute(x + ":" + y + ":" + Squares.LEFT)).equals(Squares.TRUE) };
         String player = (String) p.getAttribute(x + ":" + y + ":" + Squares.COLOR);
+        if (player.equals(Squares.WHITE))
+        {
+            player = Squares.BLACK;
+        }
+        else if (player.equals(Squares.BLACK))
+        {
+            player = Squares.WHITE;
+        }
         return new Box(edges, player);
     }
 }

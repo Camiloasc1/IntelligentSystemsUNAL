@@ -1,11 +1,12 @@
 
 package unalcol.agents.examples.squares.SII_20152.minotauro;
 
+import java.util.HashMap;
+
 import unalcol.agents.Action;
 import unalcol.agents.AgentProgram;
 import unalcol.agents.Percept;
 import unalcol.agents.examples.squares.Squares;
-import unalcol.types.collection.vector.Vector;
 
 /**
  *
@@ -31,45 +32,37 @@ public class SquaresPlayer implements AgentProgram
         // Wait my turn
         while (!p.getAttribute(Squares.TURN).equals(color))
         {
-            // try
-            // {
-            // Thread.sleep(10l);
-            // }
-            // catch (Exception e)
-            // {
-            // }
             Board b = new Board(p);
             if (b.isFull())
                 return new Action(Squares.PASS);
         }
+        // try
+        // {
+        // Thread.sleep(2000l);
+        // }
+        // catch (Exception e)
+        // {
+        // }
         Board b = new Board(p);
-        int size = Integer.parseInt((String) p.getAttribute(Squares.SIZE));
-        int x = 0;
-        int y = 0;
-        Vector<String> v = new Vector<String>();
-        while (v.size() == 0)
+        // System.out.println(b);
+        if (b.isFull())
+            return new Action("0:0:" + Squares.TOP);// FIXME error in unalcol lib
+        // return new Action(Squares.PASS);
+        HashMap<Board, String> childs = b.getChilds(color);
+        Board max = null;
+        int maxVal = Integer.MIN_VALUE;
+        for (Board board : childs.keySet())
         {
-            x = (int) (size * Math.random());
-            y = (int) (size * Math.random());
-            if (((String) p.getAttribute(x + ":" + y + ":" + Squares.LEFT)).equals(Squares.FALSE))
+            int val = board.eval(color);
+            if (val > maxVal)
             {
-                v.add(Squares.LEFT);
-            }
-            if (((String) p.getAttribute(x + ":" + y + ":" + Squares.TOP)).equals(Squares.FALSE))
-            {
-                v.add(Squares.TOP);
-            }
-            if (((String) p.getAttribute(x + ":" + y + ":" + Squares.BOTTOM)).equals(Squares.FALSE))
-            {
-                v.add(Squares.BOTTOM);
-            }
-            if (((String) p.getAttribute(x + ":" + y + ":" + Squares.RIGHT)).equals(Squares.FALSE))
-            {
-                v.add(Squares.RIGHT);
+                max = board;
+                maxVal = val;
             }
         }
-        String act = x + ":" + y + ":" + v.get((int) (Math.random() * v.size()));
+        String act = childs.get(max);
+        // System.out.println(color + "-" + act + "-" + System.currentTimeMillis());
+        // System.out.println(max);
         return new Action(act);
     }
-
 }

@@ -17,7 +17,7 @@ public class Box
     public static final int LEFT = 3;
     private boolean[] edges;
     private String owner;
-
+    
     /**
      *
      */
@@ -28,7 +28,7 @@ public class Box
         { false, false, false, false };
         owner = Squares.SPACE;
     }
-
+    
     /**
      * @param edges
      * @param owner
@@ -41,7 +41,15 @@ public class Box
         this.edges = edges.clone();
         this.owner = owner;
     }
-
+    
+    /**
+     * @param box
+     */
+    public Box(Box box)
+    {
+        this(box.edges, box.owner);
+    }
+    
     /**
      * @return the edges
      */
@@ -49,7 +57,7 @@ public class Box
     {
         return edges;
     }
-
+    
     /**
      * @param edges
      *            the edges to set
@@ -58,7 +66,7 @@ public class Box
     {
         this.edges = edges.clone();
     }
-
+    
     /**
      * @param edge
      * @return the status of the edge
@@ -67,7 +75,7 @@ public class Box
     {
         return edges[edge];
     }
-
+    
     /**
      * @param edge
      *            the edge to set
@@ -76,7 +84,7 @@ public class Box
     {
         edges[edge] = true;
     }
-
+    
     /**
      * @param edge
      *            the edge to clear
@@ -85,7 +93,7 @@ public class Box
     {
         edges[edge] = false;
     }
-
+    
     /**
      * @return the owner
      */
@@ -93,7 +101,7 @@ public class Box
     {
         return owner;
     }
-
+    
     /**
      * @param owner
      *            the owner to set
@@ -102,7 +110,7 @@ public class Box
     {
         this.owner = owner;
     }
-
+    
     public int count()
     {
         int count = 0;
@@ -115,7 +123,7 @@ public class Box
         }
         return count;
     }
-
+    
     public int eval(String player)
     {
         int count = 1;
@@ -133,7 +141,60 @@ public class Box
         }
         return count;
     }
-
+    
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = (prime * result) + Arrays.hashCode(edges);
+        result = (prime * result) + ((owner == null) ? 0 : owner.hashCode());
+        return result;
+    }
+    
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Box other = (Box) obj;
+        if (!Arrays.equals(edges, other.edges))
+            return false;
+        if (owner == null)
+        {
+            if (other.owner != null)
+                return false;
+        }
+        else if (!owner.equals(other.owner))
+            return false;
+        return true;
+    }
+    
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    protected Object clone() throws CloneNotSupportedException
+    {
+        return new Box(this);
+    }
+    
     /*
      * (non-Javadoc)
      *

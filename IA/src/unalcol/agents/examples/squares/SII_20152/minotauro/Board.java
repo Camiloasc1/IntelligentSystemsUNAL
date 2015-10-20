@@ -1,7 +1,11 @@
 
 package unalcol.agents.examples.squares.SII_20152.minotauro;
 
+import java.util.Arrays;
+import java.util.HashMap;
+
 import unalcol.agents.Percept;
+import unalcol.agents.examples.squares.Squares;
 
 /**
  * @author Minotauro
@@ -9,6 +13,8 @@ import unalcol.agents.Percept;
  */
 public class Board
 {
+    private static final String[] EDGES_ACTION = new String[]
+    { Squares.TOP, Squares.RIGHT, Squares.BOTTOM, Squares.LEFT };
     protected Box[][] board;
 
     /**
@@ -47,6 +53,19 @@ public class Board
             for (int y = 0; y < size; y++)
             {
                 board[x][y] = Perceptions.BOX.getBox(p, size - 1 - y, x);
+            }
+        }
+    }
+
+    public Board(Board b)
+    {
+        int size = b.board.length;
+        board = new Box[size][size];
+        for (int x = 0; x < size; x++)
+        {
+            for (int y = 0; y < size; y++)
+            {
+                board[x][y] = new Box(b.board[x][y]);
             }
         }
     }
@@ -148,17 +167,22 @@ public class Board
      */
     protected void eat(int x, int y, String player)
     {
-        if (count(x, y) < 3)
-            return;
-        for (int i = 0; i < 4; i++)
+        if ((count(x, y) == 4) && board[x][y].getOwner().equals(Squares.SPACE))// FIXME error in unalcol lib
         {
-            if (board[x][y].getEdge(i))
+            board[x][y].setOwner(Squares.BLACK);
+            return;
+        }
+        if (count(x, y) != 3)
+            return;
+        for (int e = 0; e < 4; e++)
+        {
+            if (board[x][y].getEdge(e))
             {
                 continue;
             }
-            board[x][y].setEdge(i);
+            board[x][y].setEdge(e);
             board[x][y].setOwner(player);
-            switch (i)
+            switch (e)
             {
                 case Box.UP:
                     y++;
@@ -173,7 +197,7 @@ public class Board
                     x--;
                     break;
             }
-            board[x][y].setEdge((i + 2) % 4);
+            board[x][y].setEdge((e + 2) % 4);
             eat(x, y, player);
         }
     }
@@ -205,8 +229,75 @@ public class Board
                 break;
         }
         board[x][y].setEdge((edge + 2) % 4);
+        player = player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;
         eat(x, y, player);
         eat(x2, y2, player);
+    }
+
+    HashMap<Board, String> getChilds(String player)
+    {
+        HashMap<Board, String> childs = new HashMap<Board, String>();
+        for (int x = 0; x < board.length; x++)
+        {
+            for (int y = 0; y < board.length; y++)
+            {
+                for (int e = 0; e < 4; e++)
+                {
+                    if (!board[x][y].getEdge(e))
+                    {
+                        Board b = new Board(this);
+                        b.play(x, y, e, player);
+                        childs.put(b, (board.length - 1 - y) + ":" + (x) + ":" + EDGES_ACTION[e]);
+                    }
+                }
+            }
+        }
+        return childs;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = (prime * result) + Arrays.deepHashCode(board);
+        return result;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Board other = (Board) obj;
+        if (!Arrays.deepEquals(board, other.board))
+            return false;
+        return true;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    protected Object clone() throws CloneNotSupportedException
+    {
+        return new Board(this);
     }
 
     /*
