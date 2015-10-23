@@ -3,20 +3,20 @@ package unalcol.agents.examples.squares.SII_20152.minotauro;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import unalcol.agents.Percept;
 import unalcol.agents.examples.squares.Squares;
 
 /**
  * @author Minotauro
- *         
  */
 public class Board
 {
     private static final String[] EDGES_ACTION = new String[]
     { Squares.TOP, Squares.RIGHT, Squares.BOTTOM, Squares.LEFT };
     protected Box[][] board;
-
+    
     /**
      * @param size
      *            the size of the board
@@ -39,7 +39,7 @@ public class Board
             board[0][i].setEdge(Box.LEFT);
         }
     }
-
+    
     /**
      * @param p
      *            the perception containing the board
@@ -56,7 +56,7 @@ public class Board
             }
         }
     }
-
+    
     public Board(Board b)
     {
         int size = b.board.length;
@@ -69,7 +69,7 @@ public class Board
             }
         }
     }
-
+    
     /**
      * @param x
      * @param y
@@ -79,7 +79,7 @@ public class Board
     {
         return board[x][y].count();
     }
-
+    
     /**
      * @return the edges count of the board
      */
@@ -95,7 +95,7 @@ public class Board
         }
         return count;
     }
-
+    
     /**
      * @param x
      * @param y
@@ -106,7 +106,7 @@ public class Board
     {
         return board[x][y].eval(player);
     }
-
+    
     /**
      * @param player
      * @return the value of the board for player
@@ -123,7 +123,7 @@ public class Board
         }
         return count;
     }
-
+    
     /**
      * @param player
      * @return the points for the player
@@ -143,7 +143,7 @@ public class Board
         }
         return points;
     }
-
+    
     /**
      * @return True if the board is full, else False
      */
@@ -159,13 +159,13 @@ public class Board
         }
         return true;
     }
-
+    
     /**
      * @param x
      * @param y
      * @param player
      */
-    protected void eat(int x, int y, String player)
+    private void eat(int x, int y, String player)
     {
         if ((count(x, y) == 4) && board[x][y].getOwner().equals(Squares.SPACE))// FIXME error in unalcol lib
         {
@@ -201,7 +201,7 @@ public class Board
             eat(x, y, player);
         }
     }
-
+    
     /**
      * @param x
      * @param y
@@ -233,28 +233,32 @@ public class Board
         eat(x, y, player);
         eat(x2, y2, player);
     }
-
-    HashMap<Board, String> getChilds(String player)
+    
+    Map<String, Board> getChildren(String player)
     {
-        HashMap<Board, String> childs = new HashMap<Board, String>();
+        Map<String, Board> children = new HashMap<String, Board>();
+        Board b;
+        String action;
         for (int x = 0; x < board.length; x++)
         {
             for (int y = 0; y < board.length; y++)
             {
-                for (int e = 0; e < 4; e++)
+                // for (int e = 0; e < 4; e++)
+                for (int e = 0; e < 2; e++)// Top + Right
                 {
                     if (!board[x][y].getEdge(e))
                     {
-                        Board b = new Board(this);
+                        b = new Board(this);
                         b.play(x, y, e, player);
-                        childs.put(b, (board.length - 1 - y) + ":" + (x) + ":" + EDGES_ACTION[e]);
+                        action = (board.length - 1 - y) + ":" + (x) + ":" + EDGES_ACTION[e];
+                        children.put(action, b);
                     }
                 }
             }
         }
-        return childs;
+        return children;
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -268,7 +272,7 @@ public class Board
         result = (prime * result) + Arrays.deepHashCode(board);
         return result;
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -288,7 +292,7 @@ public class Board
             return false;
         return true;
     }
-
+    
     /*
      * (non-Javadoc)
      *
@@ -299,7 +303,7 @@ public class Board
     {
         return new Board(this);
     }
-
+    
     /*
      * (non-Javadoc)
      *

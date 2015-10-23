@@ -9,7 +9,6 @@ import unalcol.agents.simulate.util.SimpleLanguage;
  * Wrapper for the agent's perceptions
  *
  * @author Minotauro
- *        
  */
 enum Perceptions
 {

@@ -1,7 +1,7 @@
 
 package unalcol.agents.examples.squares.SII_20152.minotauro;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import unalcol.agents.Action;
 import unalcol.agents.AgentProgram;
@@ -9,23 +9,26 @@ import unalcol.agents.Percept;
 import unalcol.agents.examples.squares.Squares;
 
 /**
- *
  * @author Minotauro
  */
 public class SquaresPlayer implements AgentProgram
 {
+    private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
+    private static final String PASS = "0:0:" + Squares.TOP;// FIXME error in unalcol lib
     protected String color;
-
+    private Map<Board, Map<String, Board>> game;
+    private Map<Board, String> bestAction;
+    
     public SquaresPlayer(String color)
     {
         this.color = color;
     }
-
+    
     @Override
     public void init()
     {
     }
-
+    
     @Override
     public Action compute(Percept p)
     {
@@ -34,7 +37,7 @@ public class SquaresPlayer implements AgentProgram
         {
             Board b = new Board(p);
             if (b.isFull())
-                return new Action(Squares.PASS);
+                return new Action(PASS);
         }
         // try
         // {
@@ -46,23 +49,43 @@ public class SquaresPlayer implements AgentProgram
         Board b = new Board(p);
         // System.out.println(b);
         if (b.isFull())
-            return new Action("0:0:" + Squares.TOP);// FIXME error in unalcol lib
+            return new Action(PASS);
         // return new Action(Squares.PASS);
-        HashMap<Board, String> childs = b.getChilds(color);
-        Board max = null;
+        Map<String, Board> children = b.getChildren(color);
+        String max = null;
         int maxVal = Integer.MIN_VALUE;
-        for (Board board : childs.keySet())
+        for (String action : children.keySet())
         {
-            int val = board.eval(color);
+            int val = children.get(action).eval(color);
             if (val > maxVal)
             {
-                max = board;
+                max = action;
                 maxVal = val;
             }
         }
-        String act = childs.get(max);
+        
+        // ExecutorService exec = Executors.newFixedThreadPool(NUM_CORES);
+        // try
+        // {
+        // for (final Object board : children.keySet())
+        // {
+        // exec.submit(new Runnable()
+        // {
+        // @Override
+        // public void run()
+        // {
+        // // System.out.println("Hi!");
+        // }
+        // });
+        // }
+        // }
+        // finally
+        // {
+        // exec.shutdown();
+        // }
+        String action = max;
         // System.out.println(color + "-" + act + "-" + System.currentTimeMillis());
         // System.out.println(max);
-        return new Action(act);
+        return new Action(action);
     }
 }

@@ -7,7 +7,6 @@ import unalcol.agents.examples.squares.Squares;
 
 /**
  * @author Minotauro
- *
  */
 public class Box
 {
