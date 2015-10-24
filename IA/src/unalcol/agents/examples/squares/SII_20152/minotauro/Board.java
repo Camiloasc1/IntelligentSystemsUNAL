@@ -199,6 +199,7 @@ public class Board
             }
             board[x][y].setEdge((e + 2) % 4);
             eat(x, y, player);
+            return;
         }
     }
     
@@ -229,7 +230,7 @@ public class Board
                 break;
         }
         board[x][y].setEdge((edge + 2) % 4);
-        player = player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;
+        player = swapPlayer(player);
         eat(x, y, player);
         eat(x2, y2, player);
     }
@@ -257,6 +258,11 @@ public class Board
             }
         }
         return children;
+    }
+    
+    public static String swapPlayer(String player)
+    {
+        return player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;
     }
     
     /*

@@ -54,7 +54,7 @@ public class GameTree
             
             Map<Board, String> children = b1.getChildren(currentPlayer);
             gameTree.put(b1, children);
-            System.out.println(b1 + " " + children.size());
+            // System.out.println(b1 + " " + children.size());
             // newLastLevel.addAll(children.keySet());
             Board max = null;
             int maxVal = Integer.MIN_VALUE;
@@ -77,7 +77,7 @@ public class GameTree
         // {
         // exec.shutdown();
         // }
-        currentPlayer = SquaresPlayer.playerSwap(currentPlayer);
+        currentPlayer = Board.swapPlayer(currentPlayer);
         lastLevel = newLastLevel;
         return depth++;
     }

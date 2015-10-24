@@ -44,12 +44,8 @@ public class SquaresPlayer implements AgentProgram
         {
             gameTree.increaseDepth();
         }
-        System.out.println(action);
+        // System.out.println(color + ":" + action);
+        // System.out.println(gameTree.getBestChild(b));
         return new Action(action);
-    }
-    
-    public static String playerSwap(String player)
-    {
-        return player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;
     }
 }
