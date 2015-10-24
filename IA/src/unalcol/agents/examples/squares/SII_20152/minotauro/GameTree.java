@@ -1,7 +1,7 @@
 
 package unalcol.agents.examples.squares.SII_20152.minotauro;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -15,9 +15,11 @@ public class GameTree
     
     private Map<Board, Map<Board, String>> gameTree;
     private Map<Board, Board> bestChild;
-    private Set<Board> lastLevel;
-    private String currentPlayer;
+    private Board root;
+    private String player;
     private int depth;
+    private Map<Board, Board> maxPruning;
+    private Map<Board, Board> minPruning;
     
     /**
      * @param root
@@ -25,14 +27,23 @@ public class GameTree
     public GameTree(Board root, String player)
     {
         super();
-        gameTree = new LinkedHashMap<Board, Map<Board, String>>();
-        bestChild = new LinkedHashMap<Board, Board>();
-        lastLevel = new LinkedHashSet<Board>();
-        currentPlayer = player;
+        gameTree = new HashMap<Board, Map<Board, String>>();
+        bestChild = new HashMap<Board, Board>();
+        this.root = root;
+        this.player = player;
         depth = 0;
-        gameTree.put(root, new LinkedHashMap<Board, String>());
-        bestChild.put(root, null);
-        lastLevel.add(root);
+        maxPruning = new HashMap<Board, Board>();
+        minPruning = new HashMap<Board, Board>();
+    }
+    
+    /**
+     * @param root
+     *            the root to set
+     */
+    public void setRoot(Board root)
+    {
+        this.root = root;
+        depth = 0;
     }
     
     /**
@@ -40,46 +51,36 @@ public class GameTree
      */
     public int increaseDepth()
     {
-        Set<Board> newLastLevel = new LinkedHashSet<Board>();
-        // ExecutorService exec = Executors.newFixedThreadPool(NUM_CORES);
-        // try
-        // {
-        for (final Board b1 : lastLevel)
-        {
-            // exec.submit(new Runnable()
-            // {
-            // @Override
-            // public void run()
-            // {
-            
-            Map<Board, String> children = b1.getChildren(currentPlayer);
-            gameTree.put(b1, children);
-            // System.out.println(b1 + " " + children.size());
-            // newLastLevel.addAll(children.keySet());
-            Board max = null;
-            int maxVal = Integer.MIN_VALUE;
-            for (final Board b2 : children.keySet())
-            {
-                newLastLevel.add(b2);
-                int val = b2.eval(currentPlayer);
-                if (val > maxVal)
-                {
-                    max = b2;
-                    maxVal = val;
-                }
-            }
-            bestChild.put(b1, max);
-            // }
-            // });
-        }
-        // }
-        // finally
-        // {
-        // exec.shutdown();
-        // }
-        currentPlayer = Board.swapPlayer(currentPlayer);
-        lastLevel = newLastLevel;
-        return depth++;
+        return increaseDepth(1);
+    }
+    
+    /**
+     * @param increment
+     *            the increment
+     * @return the new depth
+     */
+    public int increaseDepth(int increment)
+    {
+        depth += increment;
+        alphabeta(root, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true, player);
+        return depth;
+    }
+    
+    /**
+     * @param root
+     *            the new root
+     * @return the new depth
+     */
+    public int increaseDepth(Board root)
+    {
+        setRoot(root);
+        return increaseDepth(1);
+    }
+    
+    public int increaseDepth(Board root, int increment)
+    {
+        setRoot(root);
+        return increaseDepth(increment);
     }
     
     public String get(Board b1, Board b2)
@@ -107,12 +108,19 @@ public class GameTree
     {
         if ((depth == 0) || root.isFull())
             return root.eval(player);
+        // ExecutorService exec = Executors.newFixedThreadPool(NUM_CORES);
         if (maximize)
         {
             int bestVal = Integer.MIN_VALUE;
             Board bestBoard = null;
-            Map<Board, String> children = root.getChildren(player);
-            for (Board child : children.keySet())
+            gameTree.put(root, root.getChildren(player));
+            Set<Board> children = new LinkedHashSet<Board>();
+            if (maxPruning.containsKey(root))
+            {
+                children.add(maxPruning.get(root));
+            }
+            children.addAll(gameTree.get(root).keySet());
+            for (Board child : children)
             {
                 int childVal = alphabeta(child, depth - 1, a, b, false, player);
                 if (childVal > bestVal)
@@ -126,6 +134,7 @@ public class GameTree
                 }
                 if (b <= a)
                 {
+                    maxPruning.put(root, child);
                     break;
                 }
             }
@@ -135,8 +144,14 @@ public class GameTree
         else
         {
             int bestVal = Integer.MAX_VALUE;
-            Map<Board, String> children = root.getChildren(player);
-            for (Board child : children.keySet())
+            gameTree.put(root, root.getChildren(Board.swapPlayer(player)));
+            Set<Board> children = new LinkedHashSet<Board>();
+            if (minPruning.containsKey(root))
+            {
+                children.add(minPruning.get(root));
+            }
+            children.addAll(gameTree.get(root).keySet());
+            for (Board child : children)
             {
                 int newVal = alphabeta(child, depth - 1, a, b, true, player);
                 if (newVal < bestVal)
@@ -149,6 +164,7 @@ public class GameTree
                 }
                 if (b <= a)
                 {
+                    minPruning.put(root, child);
                     break;
                 }
             }

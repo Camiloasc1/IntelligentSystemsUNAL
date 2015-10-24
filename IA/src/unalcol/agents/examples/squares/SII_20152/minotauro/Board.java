@@ -260,6 +260,21 @@ public class Board
         return children;
     }
     
+    public int turnCount()
+    {
+        return (count() - (4 * board.length)) / 2;
+    }
+    
+    public int totalMoves()
+    {
+        return 2 * board.length * (board.length - 1);
+    }
+    
+    public int totalEdges()
+    {
+        return 2 * board.length * (board.length + 1);
+    }
+    
     public static String swapPlayer(String player)
     {
         return player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;

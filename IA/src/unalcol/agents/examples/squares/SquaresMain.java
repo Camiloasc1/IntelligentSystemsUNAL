@@ -17,7 +17,7 @@ public class SquaresMain
     {
         // Reflection
         Agent w_agent = new Agent(new SquaresPlayer(Squares.WHITE));
-        // Agent b_agent = new Agent(new SquaresPlayer(Squares.BLACK));
+        // Agent b_agent = new Agent(new SquaresPlayer2(Squares.BLACK));
         // Agent w_agent = new Agent(new DummySquaresAgentProgram(Squares.WHITE));
         Agent b_agent = new Agent(new DummySquaresAgentProgram(Squares.BLACK));
         SquaresMainFrame frame = new SquaresMainFrame(w_agent, b_agent);
