@@ -234,9 +234,9 @@ public class Board
         eat(x2, y2, player);
     }
     
-    Map<String, Board> getChildren(String player)
+    Map<Board, String> getChildren(String player)
     {
-        Map<String, Board> children = new HashMap<String, Board>();
+        Map<Board, String> children = new HashMap<Board, String>();
         Board b;
         String action;
         for (int x = 0; x < board.length; x++)
@@ -251,7 +251,7 @@ public class Board
                         b = new Board(this);
                         b.play(x, y, e, player);
                         action = (board.length - 1 - y) + ":" + (x) + ":" + EDGES_ACTION[e];
-                        children.put(action, b);
+                        children.put(b, action);
                     }
                 }
             }

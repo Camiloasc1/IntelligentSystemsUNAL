@@ -1,6 +1,8 @@
 
 package unalcol.agents.examples.squares.SII_20152.minotauro;
 
+import java.util.Map;
+
 import unalcol.agents.Action;
 import unalcol.agents.AgentProgram;
 import unalcol.agents.Percept;
@@ -9,13 +11,12 @@ import unalcol.agents.examples.squares.Squares;
 /**
  * @author Minotauro
  */
-public class SquaresPlayer implements AgentProgram
+public class SquaresPlayer2 implements AgentProgram
 {
     private static final String PASS = "0:0:" + Squares.TOP;// FIXME error in unalcol lib
     protected String color;
-    private GameTree gameTree;
     
-    public SquaresPlayer(String color)
+    public SquaresPlayer2(String color)
     {
         this.color = color;
     }
@@ -38,18 +39,20 @@ public class SquaresPlayer implements AgentProgram
         Board b = new Board(p);
         if (b.isFull())
             return new Action(PASS);
-        gameTree = new GameTree(b, color);
-        String action;
-        while ((action = gameTree.getBestMove(b)) == null)
+        Map<Board, String> children = b.getChildren(color);
+        Board max = null;
+        int maxVal = Integer.MIN_VALUE;
+        for (Board action : children.keySet())
         {
-            gameTree.increaseDepth();
+            int val = action.eval(color);
+            if (val > maxVal)
+            {
+                max = action;
+                maxVal = val;
+            }
         }
-        System.out.println(action);
+        
+        String action = children.get(max);
         return new Action(action);
-    }
-    
-    public static String playerSwap(String player)
-    {
-        return player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;
     }
 }
