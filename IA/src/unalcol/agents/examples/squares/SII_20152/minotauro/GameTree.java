@@ -34,6 +34,7 @@ public class GameTree
         depth = 0;
         maxPruning = new HashMap<Board, Board>();
         minPruning = new HashMap<Board, Board>();
+        // ExecutorService exec = Executors.newFixedThreadPool(NUM_CORES);
     }
     
     /**
@@ -62,7 +63,7 @@ public class GameTree
     public int increaseDepth(int increment)
     {
         depth += increment;
-        alphabeta(root, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true, player);
+        alphabeta(root, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
         return depth;
     }
     
@@ -104,16 +105,18 @@ public class GameTree
         return null;
     }
     
-    private int alphabeta(Board root, int depth, int a, int b, boolean maximize, String player)
+    private int alphabeta(Board root, int depth, int a, int b, boolean maximize)
     {
         if ((depth == 0) || root.isFull())
             return root.eval(player);
-        // ExecutorService exec = Executors.newFixedThreadPool(NUM_CORES);
         if (maximize)
         {
             int bestVal = Integer.MIN_VALUE;
             Board bestBoard = null;
-            gameTree.put(root, root.getChildren(player));
+            if (!gameTree.containsKey(root))
+            {
+                gameTree.put(root, root.getChildren(player));
+            }
             Set<Board> children = new LinkedHashSet<Board>();
             if (maxPruning.containsKey(root))
             {
@@ -122,7 +125,7 @@ public class GameTree
             children.addAll(gameTree.get(root).keySet());
             for (Board child : children)
             {
-                int childVal = alphabeta(child, depth - 1, a, b, false, player);
+                int childVal = alphabeta(child, depth - 1, a, b, false);
                 if (childVal > bestVal)
                 {
                     bestVal = childVal;
@@ -144,7 +147,10 @@ public class GameTree
         else
         {
             int bestVal = Integer.MAX_VALUE;
-            gameTree.put(root, root.getChildren(Board.swapPlayer(player)));
+            if (!gameTree.containsKey(root))
+            {
+                gameTree.put(root, root.getChildren(Board.swapPlayer(player)));
+            }
             Set<Board> children = new LinkedHashSet<Board>();
             if (minPruning.containsKey(root))
             {
@@ -153,7 +159,7 @@ public class GameTree
             children.addAll(gameTree.get(root).keySet());
             for (Board child : children)
             {
-                int newVal = alphabeta(child, depth - 1, a, b, true, player);
+                int newVal = alphabeta(child, depth - 1, a, b, true);
                 if (newVal < bestVal)
                 {
                     bestVal = newVal;
