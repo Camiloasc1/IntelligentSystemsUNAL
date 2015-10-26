@@ -11,8 +11,9 @@ import java.util.Set;
  */
 public class GameTree
 {
-    private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
+    // private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
     
+    // private Map<Board, List<Board>> gameTree;
     private Map<Board, Map<Board, String>> gameTree;
     private Map<Board, Board> bestChild;
     private Board root;
@@ -27,6 +28,7 @@ public class GameTree
     public GameTree(Board root, String player)
     {
         super();
+        // gameTree = new HashMap<Board, List<Board>>();
         gameTree = new HashMap<Board, Map<Board, String>>();
         bestChild = new HashMap<Board, Board>();
         this.root = root;
@@ -86,6 +88,7 @@ public class GameTree
     
     public String get(Board b1, Board b2)
     {
+        // return b1.getChildren(player).getOrDefault(b2, null);
         if (gameTree.containsKey(b1) && gameTree.get(b1).containsKey(b2))
             return gameTree.get(b1).get(b2);
         return null;
@@ -115,11 +118,14 @@ public class GameTree
             Board bestBoard = null;
             if (!gameTree.containsKey(root))
             {
+                // gameTree.put(root, root.getChildrenList(player));
                 gameTree.put(root, root.getChildren(player));
             }
+            // LinkedList<Board> children = new LinkedList<Board>(gameTree.get(root));
             Set<Board> children = new LinkedHashSet<Board>();
             if (maxPruning.containsKey(root))
             {
+                // children.addFirst(maxPruning.get(root));
                 children.add(maxPruning.get(root));
             }
             children.addAll(gameTree.get(root).keySet());
@@ -149,11 +155,14 @@ public class GameTree
             int bestVal = Integer.MAX_VALUE;
             if (!gameTree.containsKey(root))
             {
+                // gameTree.put(root, root.getChildrenList(Board.swapPlayer(player)));
                 gameTree.put(root, root.getChildren(Board.swapPlayer(player)));
             }
+            // LinkedList<Board> children = new LinkedList<Board>(gameTree.get(root));
             Set<Board> children = new LinkedHashSet<Board>();
             if (minPruning.containsKey(root))
             {
+                // children.addFirst(minPruning.get(root));
                 children.add(minPruning.get(root));
             }
             children.addAll(gameTree.get(root).keySet());
