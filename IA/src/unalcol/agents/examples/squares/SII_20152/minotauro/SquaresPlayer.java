@@ -11,48 +11,51 @@ import unalcol.agents.examples.squares.Squares;
  */
 public class SquaresPlayer implements AgentProgram
 {
+    private static final String ZERO_TIME = "0:0:0:0";
     private static final String PASS = "0:0:" + Squares.TOP;// FIXME error in unalcol lib
-    private static int DEFAULT_SIZE = 8;
     protected String color;
-    private boolean fitSize;
     private GameTree gameTree;
     private long realTime;
+    private Percept lastPercept;
+    private TimeCheck timeCheck;
     
     public SquaresPlayer(String color)
     {
         this.color = color;
+        timeCheck = new TimeCheck();
+        timeCheck.start();
         init();
+        // Board b = new Board(4);
+        // gameTree = new GameTree(b, color);
+        // for (int i = 0; i < 32; i++)
+        // {
+        // long start = System.currentTimeMillis();
+        // gameTree.increaseDepth();
+        // long end = System.currentTimeMillis();
+        // System.out.println(i + ":" + (end - start));
+        // }
     }
     
     @Override
     public void init()
     {
-        fitSize = false;
-        Board b = new Board(DEFAULT_SIZE);
-        gameTree = new GameTree(b, color);
-        int i = 11 - DEFAULT_SIZE;
-        i = (i < 1) ? 1 : i;
-        gameTree.increaseDepth(i);
         realTime = 0;
     }
     
+    @SuppressWarnings("deprecation")
     @Override
     public Action compute(Percept p)
     {
         long start = System.currentTimeMillis();
-        if (!fitSize)
+        lastPercept = p;
+        // Initialize gameTree
+        if (gameTree == null)
         {
             int size = Perceptions.SIZE.getIntPerception(p);
-            if (size != DEFAULT_SIZE)
-            {
-                DEFAULT_SIZE = size;
-                Board b = new Board(size);
-                gameTree = new GameTree(b, color);
-                gameTree.increaseDepth();
-            }
-            fitSize = true;
+            Board b = new Board(size);
+            gameTree = new GameTree(b, color);
+            gameTree.startExplorer();
         }
-        
         // Wait my turn
         while (!p.getAttribute(Squares.TURN).equals(color))
         {
@@ -60,42 +63,60 @@ public class SquaresPlayer implements AgentProgram
             if (b.isFull())
                 return new Action(PASS);
         }
+        // Check time
+        if (Perceptions.W_TIME.getStringPerception(p).equals(ZERO_TIME)
+                || Perceptions.B_TIME.getStringPerception(p).equals(ZERO_TIME))
+        {
+            gameTree.stopExplorer();
+            timeCheck.stop();
+        }
         
+        // Get current board
         Board b = new Board(p);
         if (b.isFull())
             return new Action(PASS);
-            
         gameTree.setRoot(b);
         
+        // Get best move
         String action;
-        
-        int turn = b.turnCount();
-        int moves = b.totalMoves();
-        int depth = 1;
-        double frac = 1.0 / 4.0;
-        if (turn > (moves * frac))
-        {
-            depth = 2;
-        }
-        frac = 2.0 / 4.0;
-        if (turn > (moves * frac))
-        {
-            depth = 4;
-            // depth = moves - turn;
-        }
-        frac = 3.0 / 4.0;
-        if (turn > (moves * frac))
-        {
-            depth = moves - turn;
-        }
         while ((action = gameTree.getBestMove(b)) == null)
         {
-            gameTree.increaseDepth(depth);
+            System.out.println("wait");
         }
         realTime += System.currentTimeMillis() - start;
         System.out.println(
-                depth + ":" + turn + ":" + color + ":" + action + ":" + (System.currentTimeMillis() - start) + ":" + realTime);
-        // System.out.println(gameTree.getBestChild(b));
+                b.turnCount() + ":" + color + ":" + action + ":" + (System.currentTimeMillis() - start) + ":" + realTime);
+        System.out.println(gameTree.getBestChild(b));
         return new Action(action);
     }
+    
+    private class TimeCheck extends Thread
+    {
+        
+        @Override
+        public void run()
+        {
+            while (true)
+            {
+                try
+                {
+                    sleep(1000l);
+                }
+                catch (InterruptedException e)
+                {
+                }
+                if ((lastPercept == null) || (gameTree == null))
+                {
+                    continue;
+                }
+                // Check time
+                if (Perceptions.W_TIME.getStringPerception(lastPercept).equals(ZERO_TIME)
+                        || Perceptions.B_TIME.getStringPerception(lastPercept).equals(ZERO_TIME))
+                {
+                    gameTree.stopExplorer();
+                    return;
+                }
+            }
+        }
+    };
 }

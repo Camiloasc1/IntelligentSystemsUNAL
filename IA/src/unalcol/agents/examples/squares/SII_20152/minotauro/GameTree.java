@@ -19,8 +19,10 @@ public class GameTree
     private Board root;
     private String player;
     private int depth;
+    private Map<Board, Integer> value;
     private Map<Board, Board> maxPruning;
     private Map<Board, Board> minPruning;
+    private Explorer explorer;
     
     /**
      * @param root
@@ -34,9 +36,10 @@ public class GameTree
         this.root = root;
         this.player = player;
         depth = 0;
+        value = new HashMap<Board, Integer>();
         maxPruning = new HashMap<Board, Board>();
         minPruning = new HashMap<Board, Board>();
-        // ExecutorService exec = Executors.newFixedThreadPool(NUM_CORES);
+        // startExplorer();
     }
     
     /**
@@ -45,8 +48,35 @@ public class GameTree
      */
     public void setRoot(Board root)
     {
+        stopExplorer();
         this.root = root;
         depth = 0;
+        // Board b = root;
+        // while (bestChild.containsKey(b))
+        // {
+        // depth++;
+        // System.out.println("depth");
+        // b = bestChild.get(b);
+        // }
+        System.out.println("Change root");
+        startExplorer();
+    }
+    
+    public void startExplorer()
+    {
+        stopExplorer();
+        explorer = new Explorer();
+        explorer.start();
+    }
+    
+    @SuppressWarnings("deprecation")
+    public void stopExplorer()
+    {
+        if (explorer != null)
+        {
+            explorer.stop();
+            explorer = null;
+        }
     }
     
     /**
@@ -54,36 +84,8 @@ public class GameTree
      */
     public int increaseDepth()
     {
-        return increaseDepth(1);
-    }
-    
-    /**
-     * @param increment
-     *            the increment
-     * @return the new depth
-     */
-    public int increaseDepth(int increment)
-    {
-        depth += increment;
-        alphabeta(root, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+        alphabeta(root, ++depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
         return depth;
-    }
-    
-    /**
-     * @param root
-     *            the new root
-     * @return the new depth
-     */
-    public int increaseDepth(Board root)
-    {
-        setRoot(root);
-        return increaseDepth(1);
-    }
-    
-    public int increaseDepth(Board root, int increment)
-    {
-        setRoot(root);
-        return increaseDepth(increment);
     }
     
     public String get(Board b1, Board b2)
@@ -118,14 +120,11 @@ public class GameTree
             Board bestBoard = null;
             if (!gameTree.containsKey(root))
             {
-                // gameTree.put(root, root.getChildrenList(player));
                 gameTree.put(root, root.getChildren(player));
             }
-            // LinkedList<Board> children = new LinkedList<Board>(gameTree.get(root));
             Set<Board> children = new LinkedHashSet<Board>();
             if (maxPruning.containsKey(root))
             {
-                // children.addFirst(maxPruning.get(root));
                 children.add(maxPruning.get(root));
             }
             children.addAll(gameTree.get(root).keySet());
@@ -148,6 +147,7 @@ public class GameTree
                 }
             }
             bestChild.put(root, bestBoard);
+            value.put(root, bestVal);
             return bestVal;
         }
         else
@@ -155,14 +155,11 @@ public class GameTree
             int bestVal = Integer.MAX_VALUE;
             if (!gameTree.containsKey(root))
             {
-                // gameTree.put(root, root.getChildrenList(Board.swapPlayer(player)));
                 gameTree.put(root, root.getChildren(Board.swapPlayer(player)));
             }
-            // LinkedList<Board> children = new LinkedList<Board>(gameTree.get(root));
             Set<Board> children = new LinkedHashSet<Board>();
             if (minPruning.containsKey(root))
             {
-                // children.addFirst(minPruning.get(root));
                 children.add(minPruning.get(root));
             }
             children.addAll(gameTree.get(root).keySet());
@@ -186,4 +183,29 @@ public class GameTree
             return bestVal;
         }
     }
+    
+    private class Explorer extends Thread
+    {
+        
+        @Override
+        public void run()
+        {
+            // try
+            // {
+            while (depth < root.totalMoves())
+            {
+                increaseDepth();
+                System.out.println("Increased to " + (depth + 1) + " " + value.getOrDefault(root, 0));
+            }
+            // }
+            // catch (Exception e)
+            // {
+            // System.out.println("Die");
+            // }
+            // finally
+            // {
+            // System.out.println("Nope");
+            // }
+        }
+    };
 }

@@ -13,9 +13,12 @@ import unalcol.agents.examples.squares.Squares;
  */
 public class Board
 {
-    private static final String[] EDGES_ACTION = new String[]
-    { Squares.TOP, Squares.RIGHT, Squares.BOTTOM, Squares.LEFT };
-    protected Box[][] board;
+    public static final int UP = 1;
+    public static final int RIGHT = 2;
+    public static final int DOWN = 4;
+    public static final int LEFT = 8;
+    public static final int WHITE = 16;
+    protected int[][] board;
     
     /**
      * @param size
@@ -23,20 +26,13 @@ public class Board
      */
     public Board(int size)
     {
-        board = new Box[size][size];
-        for (int x = 0; x < size; x++)
-        {
-            for (int y = 0; y < size; y++)
-            {
-                board[x][y] = new Box();
-            }
-        }
+        board = new int[size][size];
         for (int i = 0; i < size; i++)
         {
-            board[i][size - 1].setEdge(Box.UP);
-            board[size - 1][i].setEdge(Box.RIGHT);
-            board[i][0].setEdge(Box.DOWN);
-            board[0][i].setEdge(Box.LEFT);
+            setEdge(i, size - 1, UP);
+            setEdge(size - 1, i, RIGHT);
+            setEdge(i, 0, DOWN);
+            setEdge(0, i, LEFT);
         }
     }
     
@@ -47,12 +43,29 @@ public class Board
     public Board(Percept p)
     {
         int size = Perceptions.SIZE.getIntPerception(p);
-        board = new Box[size][size];
+        board = new int[size][size];
         for (int x = 0; x < size; x++)
         {
             for (int y = 0; y < size; y++)
             {
-                board[x][y] = Perceptions.BOX.getBox(p, size - 1 - y, x);
+                Box b = Perceptions.BOX.getBox(p, size - 1 - y, x);
+                if (b.getEdge(Box.UP))
+                {
+                    setEdge(x, y, UP);
+                }
+                if (b.getEdge(Box.RIGHT))
+                {
+                    setEdge(x, y, RIGHT);
+                }
+                if (b.getEdge(Box.DOWN))
+                {
+                    setEdge(x, y, DOWN);
+                }
+                if (b.getEdge(Box.LEFT))
+                {
+                    setEdge(x, y, LEFT);
+                }
+                setOwner(x, y, b.getOwner());
             }
         }
     }
@@ -60,14 +73,39 @@ public class Board
     public Board(Board b)
     {
         int size = b.board.length;
-        board = new Box[size][size];
+        board = new int[size][size];
         for (int x = 0; x < size; x++)
         {
             for (int y = 0; y < size; y++)
             {
-                board[x][y] = new Box(b.board[x][y]);
+                board[x][y] = b.board[x][y];
             }
         }
+    }
+    
+    public boolean getEdge(int x, int y, int e)
+    {
+        return (board[x][y] & e) == e;
+    }
+    
+    public void setEdge(int x, int y, int e)
+    {
+        board[x][y] |= e;
+    }
+    
+    public String getOwner(int x, int y)
+    {
+        return getEdge(x, y, WHITE) ? Squares.WHITE : Squares.BLACK;
+    }
+    
+    public boolean isOwner(int x, int y, String player)
+    {
+        return player.equals(getOwner(x, y));
+    }
+    
+    public void setOwner(int x, int y, String player)
+    {
+        setEdge(x, y, player.equals(Squares.WHITE) ? WHITE : 0);
     }
     
     /**
@@ -77,7 +115,8 @@ public class Board
      */
     public int count(int x, int y)
     {
-        return board[x][y].count();
+        return (getEdge(x, y, UP) ? 1 : 0) + (getEdge(x, y, RIGHT) ? 1 : 0) + (getEdge(x, y, DOWN) ? 1 : 0)
+                + (getEdge(x, y, LEFT) ? 1 : 0);
     }
     
     /**
@@ -104,7 +143,18 @@ public class Board
      */
     public int eval(int x, int y, String player)
     {
-        return board[x][y].eval(player);
+        int count = 1;
+        for (int i = 0; i < count(x, y); i++)
+        {
+            count <<= 1;// count *= 2;
+        }
+        count--;
+        if ((count == 15) && !isOwner(x, y, player))
+            return -15;
+        return count;
+        // Box b = new Box(new boolean[]
+        // { getEdge(x, y, UP), getEdge(x, y, RIGHT), getEdge(x, y, DOWN), getEdge(x, y, LEFT) }, getOwner(x, y));
+        // return b.eval(player);
     }
     
     /**
@@ -113,14 +163,27 @@ public class Board
      */
     public int eval(String player)
     {
+        int eval;
+        int points = 0;
         int count = 0;
         for (int x = 0; x < board.length; x++)
         {
             for (int y = 0; y < board.length; y++)
             {
-                count += eval(x, y, player);
+                eval = eval(x, y, player);
+                count += eval;
+                if (eval == 15)
+                {
+                    points++;
+                }
+                else if (eval == -15)
+                {
+                    points--;
+                }
             }
         }
+        // count += (points(player) - points(swapPlayer(player))) << 16;
+        count += points << 16;
         return count;
     }
     
@@ -135,7 +198,7 @@ public class Board
         {
             for (int y = 0; y < board.length; y++)
             {
-                if ((count(x, y) == 4) && player.equals(board[x][y].getOwner()))
+                if ((count(x, y) == 4) && isOwner(x, y, player))
                 {
                     points++;
                 }
@@ -167,37 +230,34 @@ public class Board
      */
     private void eat(int x, int y, String player)
     {
-        if ((count(x, y) == 4) && board[x][y].getOwner().equals(Squares.SPACE))// FIXME error in unalcol lib
-        {
-            board[x][y].setOwner(Squares.BLACK);
-            return;
-        }
+        int[] edges =
+        { UP, RIGHT, DOWN, LEFT };
         if (count(x, y) != 3)
             return;
-        for (int e = 0; e < 4; e++)
+        for (int e : edges)
         {
-            if (board[x][y].getEdge(e))
+            if (getEdge(x, y, e))
             {
                 continue;
             }
-            board[x][y].setEdge(e);
-            board[x][y].setOwner(player);
+            setEdge(x, y, e);
+            setOwner(x, y, player);
             switch (e)
             {
-                case Box.UP:
+                case UP:
                     y++;
                     break;
-                case Box.RIGHT:
+                case RIGHT:
                     x++;
                     break;
-                case Box.DOWN:
+                case DOWN:
                     y--;
                     break;
-                case Box.LEFT:
+                case LEFT:
                     x--;
                     break;
             }
-            board[x][y].setEdge((e + 2) % 4);
+            setEdge(x, y, complementEdge(e));
             eat(x, y, player);
             return;
         }
@@ -206,30 +266,30 @@ public class Board
     /**
      * @param x
      * @param y
-     * @param edge
+     * @param e
      * @param player
      */
-    public void play(int x, int y, int edge, String player)
+    public void play(int x, int y, int e, String player)
     {
-        board[x][y].setEdge(edge);
+        setEdge(x, y, e);
         int x2 = x;
         int y2 = y;
-        switch (edge)
+        switch (e)
         {
-            case Box.UP:
+            case UP:
                 y++;
                 break;
-            case Box.RIGHT:
+            case RIGHT:
                 x++;
                 break;
-            case Box.DOWN:
+            case DOWN:
                 y--;
                 break;
-            case Box.LEFT:
+            case LEFT:
                 x--;
                 break;
         }
-        board[x][y].setEdge((edge + 2) % 4);
+        setEdge(x, y, complementEdge(e));
         player = swapPlayer(player);
         eat(x, y, player);
         eat(x2, y2, player);
@@ -237,6 +297,8 @@ public class Board
     
     Map<Board, String> getChildren(String player)
     {
+        int[] edges =
+        { UP, RIGHT };
         Map<Board, String> children = new HashMap<Board, String>();
         Board b;
         String action;
@@ -244,14 +306,13 @@ public class Board
         {
             for (int y = 0; y < board.length; y++)
             {
-                // for (int e = 0; e < 4; e++)
-                for (int e = 0; e < 2; e++)// Top + Right
+                for (int e : edges)
                 {
-                    if (!board[x][y].getEdge(e))
+                    if (!getEdge(x, y, e))
                     {
                         b = new Board(this);
                         b.play(x, y, e, player);
-                        action = (board.length - 1 - y) + ":" + (x) + ":" + EDGES_ACTION[e];
+                        action = (board.length - 1 - y) + ":" + (x) + ":" + ((e == UP) ? Squares.TOP : Squares.RIGHT);
                         children.put(b, action);
                     }
                 }
@@ -280,23 +341,40 @@ public class Board
         return player.equals(Squares.WHITE) ? Squares.BLACK : Squares.WHITE;
     }
     
+    /**
+     * @param e
+     * @return
+     */
+    public int complementEdge(int e)
+    {
+        switch (e)
+        {
+            case UP:
+                return DOWN;
+            case RIGHT:
+                return LEFT;
+            case DOWN:
+                return UP;
+            case LEFT:
+                return RIGHT;
+        }
+        return -1;
+    }
+    
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see java.lang.Object#hashCode()
      */
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        result = (prime * result) + Arrays.deepHashCode(board);
-        return result;
+        return Arrays.deepHashCode(board);
     }
     
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -339,10 +417,39 @@ public class Board
         {
             for (int y = 0; y < board.length; y++)
             {
-                str += "(" + x + "," + y + ") " + board[x][y] + "\n";
+                str += "(" + x + "," + y + ") ";
+                str += (getEdge(x, y, UP)) ? "U" : "-";
+                str += (getEdge(x, y, RIGHT)) ? "R" : "-";
+                str += (getEdge(x, y, DOWN)) ? "D" : "-";
+                str += (getEdge(x, y, LEFT)) ? "L" : "-";
+                if (count(x, y) == 4)
+                {
+                    str += (getEdge(x, y, WHITE)) ? "W" : "B";
+                }
+                else
+                {
+                    str += "-";
+                }
+                str += "\n";
             }
         }
         str += "]";
         return str;
     }
+    
+    // public static void main(String[] args)
+    // {
+    // Board b = new Board(3);
+    // System.out.println(b);
+    // System.out.println(b.eval(Squares.WHITE));
+    // System.out.println(b.eval(Squares.BLACK));
+    // Map<Board, String> children = b.getChildren(Squares.WHITE);
+    // for (Board a : children.keySet())
+    // {
+    // System.out.println(children.get(a));
+    // System.out.println(a);
+    // System.out.println(a.eval(Squares.WHITE));
+    // System.out.println(a.eval(Squares.BLACK));
+    // }
+    // }
 }
