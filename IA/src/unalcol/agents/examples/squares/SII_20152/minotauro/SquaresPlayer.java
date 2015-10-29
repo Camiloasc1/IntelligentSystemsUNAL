@@ -86,7 +86,8 @@ public class SquaresPlayer implements AgentProgram
         realTime += System.currentTimeMillis() - start;
         System.out.println(
                 b.turnCount() + ":" + color + ":" + action + ":" + (System.currentTimeMillis() - start) + ":" + realTime);
-        System.out.println(gameTree.getBestChild(b));
+        // System.out.println(b + "\n" + b.eval(color));
+        // System.out.println(gameTree.getBestChild(b) + "\n" + gameTree.getBestChild(b).eval(color));
         return new Action(action);
     }
     

@@ -15,6 +15,7 @@ public class GameTree
     
     // private Map<Board, List<Board>> gameTree;
     private Map<Board, Map<Board, String>> gameTree;
+    private Map<Board, Map<Board, String>> enemyTree;
     private Map<Board, Board> bestChild;
     private Board root;
     private String player;
@@ -32,6 +33,7 @@ public class GameTree
         super();
         // gameTree = new HashMap<Board, List<Board>>();
         gameTree = new HashMap<Board, Map<Board, String>>();
+        enemyTree = new HashMap<Board, Map<Board, String>>();
         bestChild = new HashMap<Board, Board>();
         this.root = root;
         this.player = player;
@@ -153,16 +155,16 @@ public class GameTree
         else
         {
             int bestVal = Integer.MAX_VALUE;
-            if (!gameTree.containsKey(root))
+            if (!enemyTree.containsKey(root))
             {
-                gameTree.put(root, root.getChildren(Board.swapPlayer(player)));
+                enemyTree.put(root, root.getChildren(Board.swapPlayer(player)));
             }
             Set<Board> children = new LinkedHashSet<Board>();
             if (minPruning.containsKey(root))
             {
                 children.add(minPruning.get(root));
             }
-            children.addAll(gameTree.get(root).keySet());
+            children.addAll(enemyTree.get(root).keySet());
             for (Board child : children)
             {
                 int newVal = alphabeta(child, depth - 1, a, b, true);
@@ -192,7 +194,7 @@ public class GameTree
         {
             // try
             // {
-            while (depth < root.totalMoves())
+            while (depth < (root.totalMoves() - root.turnCount()))
             {
                 increaseDepth();
                 System.out.println("Increased to " + (depth + 1) + " " + value.getOrDefault(root, 0));

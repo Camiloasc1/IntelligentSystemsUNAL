@@ -183,7 +183,7 @@ public class Board
             }
         }
         // count += (points(player) - points(swapPlayer(player))) << 16;
-        count += points << 16;
+        // count += points << 16;
         return count;
     }
     
