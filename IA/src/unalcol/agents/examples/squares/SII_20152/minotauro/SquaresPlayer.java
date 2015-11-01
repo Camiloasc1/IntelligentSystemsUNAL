@@ -11,6 +11,8 @@ import unalcol.agents.examples.squares.Squares;
  */
 public class SquaresPlayer implements AgentProgram
 {
+    private static final long SLEEP_TIME = 10l;
+    private static final int DEFAULT_SIZE = 8;
     private static final String ZERO_TIME = "0:0:0:0";
     private static final String PASS = "0:0:" + Squares.TOP;// FIXME error in unalcol lib
     protected String color;
@@ -22,9 +24,9 @@ public class SquaresPlayer implements AgentProgram
     public SquaresPlayer(String color)
     {
         this.color = color;
+        init();
         timeCheck = new TimeCheck();
         timeCheck.start();
-        init();
         // Board b = new Board(4);
         // gameTree = new GameTree(b, color);
         // for (int i = 0; i < 32; i++)
@@ -39,36 +41,21 @@ public class SquaresPlayer implements AgentProgram
     @Override
     public void init()
     {
+        gameTree = new GameTree(new Board(DEFAULT_SIZE), color);
         realTime = 0;
     }
     
-    @SuppressWarnings("deprecation")
     @Override
     public Action compute(Percept p)
     {
         long start = System.currentTimeMillis();
         lastPercept = p;
-        // Initialize gameTree
-        if (gameTree == null)
-        {
-            int size = Perceptions.SIZE.getIntPerception(p);
-            Board b = new Board(size);
-            gameTree = new GameTree(b, color);
-            gameTree.startExplorer();
-        }
         // Wait my turn
         while (!p.getAttribute(Squares.TURN).equals(color))
         {
             Board b = new Board(p);
             if (b.isFull())
                 return new Action(PASS);
-        }
-        // Check time
-        if (Perceptions.W_TIME.getStringPerception(p).equals(ZERO_TIME)
-                || Perceptions.B_TIME.getStringPerception(p).equals(ZERO_TIME))
-        {
-            gameTree.stopExplorer();
-            timeCheck.stop();
         }
         
         // Get current board
@@ -81,11 +68,18 @@ public class SquaresPlayer implements AgentProgram
         String action;
         while ((action = gameTree.getBestMove(b)) == null)
         {
-            System.out.println("wait");
+            // System.out.println("wait");
+            try
+            {
+                Thread.sleep(SLEEP_TIME);
+            }
+            catch (InterruptedException e)
+            {
+            }
         }
         realTime += System.currentTimeMillis() - start;
-        System.out.println(
-                b.turnCount() + ":" + color + ":" + action + ":" + (System.currentTimeMillis() - start) + ":" + realTime);
+        // System.out.println(b.turnCount() + ":" + color + ":" + action + ":" + gameTree.getValue(b) + ":"
+        // + (System.currentTimeMillis() - start) + ":" + realTime);
         // System.out.println(b + "\n" + b.eval(color));
         // System.out.println(gameTree.getBestChild(b) + "\n" + gameTree.getBestChild(b).eval(color));
         return new Action(action);
@@ -101,7 +95,7 @@ public class SquaresPlayer implements AgentProgram
             {
                 try
                 {
-                    sleep(1000l);
+                    sleep(250l);
                 }
                 catch (InterruptedException e)
                 {
@@ -110,12 +104,15 @@ public class SquaresPlayer implements AgentProgram
                 {
                     continue;
                 }
+                // System.out.println(Perceptions.W_TIME.getStringPerception(lastPercept));
+                // System.out.println(Perceptions.B_TIME.getStringPerception(lastPercept));// FIXME unalcol always return the white time
                 // Check time
                 if (Perceptions.W_TIME.getStringPerception(lastPercept).equals(ZERO_TIME)
                         || Perceptions.B_TIME.getStringPerception(lastPercept).equals(ZERO_TIME))
                 {
+                    // System.out.println("kill");
                     gameTree.stopExplorer();
-                    return;
+                    // return;
                 }
             }
         }

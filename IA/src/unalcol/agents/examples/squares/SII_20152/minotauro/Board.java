@@ -176,14 +176,14 @@ public class Board
                 {
                     points++;
                 }
-                else if (eval == -15)
+                if (eval == -15)
                 {
                     points--;
                 }
             }
         }
         // count += (points(player) - points(swapPlayer(player))) << 16;
-        // count += points << 16;
+        count += points << 16;
         return count;
     }
     

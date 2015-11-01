@@ -31,7 +31,6 @@ public class GameTree
     public GameTree(Board root, String player)
     {
         super();
-        // gameTree = new HashMap<Board, List<Board>>();
         gameTree = new HashMap<Board, Map<Board, String>>();
         enemyTree = new HashMap<Board, Map<Board, String>>();
         bestChild = new HashMap<Board, Board>();
@@ -53,14 +52,6 @@ public class GameTree
         stopExplorer();
         this.root = root;
         depth = 0;
-        // Board b = root;
-        // while (bestChild.containsKey(b))
-        // {
-        // depth++;
-        // System.out.println("depth");
-        // b = bestChild.get(b);
-        // }
-        System.out.println("Change root");
         startExplorer();
     }
     
@@ -92,7 +83,6 @@ public class GameTree
     
     public String get(Board b1, Board b2)
     {
-        // return b1.getChildren(player).getOrDefault(b2, null);
         if (gameTree.containsKey(b1) && gameTree.get(b1).containsKey(b2))
             return gameTree.get(b1).get(b2);
         return null;
@@ -110,6 +100,11 @@ public class GameTree
         if (bestChild.containsKey(state))
             return bestChild.get(state);
         return null;
+    }
+    
+    public int getValue(Board board)
+    {
+        return value.get(board);
     }
     
     private int alphabeta(Board root, int depth, int a, int b, boolean maximize)
@@ -192,22 +187,11 @@ public class GameTree
         @Override
         public void run()
         {
-            // try
-            // {
             while (depth < (root.totalMoves() - root.turnCount()))
             {
                 increaseDepth();
-                System.out.println("Increased to " + (depth + 1) + " " + value.getOrDefault(root, 0));
+                // System.out.println("Increased to " + (depth + 1) + " " + value.getOrDefault(root, 0));
             }
-            // }
-            // catch (Exception e)
-            // {
-            // System.out.println("Die");
-            // }
-            // finally
-            // {
-            // System.out.println("Nope");
-            // }
         }
     };
 }
