@@ -11,7 +11,8 @@ import unalcol.agents.examples.squares.Squares;
  */
 public class SquaresPlayer implements AgentProgram
 {
-    private static final long SLEEP_TIME = 10l;
+    private static final long WAIT_TIME = 100l;
+    // private static final long FIXED_WAIT_TIME = 25l;
     private static final int DEFAULT_SIZE = 8;
     private static final String ZERO_TIME = "0:0:0:0";
     private static final String PASS = "0:0:" + Squares.TOP;// FIXME error in unalcol lib
@@ -64,6 +65,37 @@ public class SquaresPlayer implements AgentProgram
             return new Action(PASS);
         gameTree.setRoot(b);
         
+        // Wait (this not work properly)
+        // {
+        // int total = b.totalMoves();
+        // long wait = FIXED_WAIT_TIME;
+        // if (b.turnCount() > (total / 8))
+        // {
+        // wait = FIXED_WAIT_TIME * 2;
+        // }
+        // if (b.turnCount() > (total / 4))
+        // {
+        // wait = FIXED_WAIT_TIME * 4;
+        // }
+        // if (b.turnCount() > (total / 2))
+        // {
+        // wait = 0l;
+        // }
+        // long a = System.currentTimeMillis();
+        // // try
+        // // {
+        // // Thread.sleep(wait);// Isn't exact when other thread is eating all the processor
+        // // }
+        // // catch (InterruptedException e)
+        // // {
+        // // }
+        // while ((System.currentTimeMillis() - a) < wait)
+        // {
+        // continue;
+        // }
+        // System.out.println(b.turnCount() + ":" + wait + ":" + (System.currentTimeMillis() - a));
+        // }
+        
         // Get best move
         String action;
         while ((action = gameTree.getBestMove(b)) == null)
@@ -71,7 +103,7 @@ public class SquaresPlayer implements AgentProgram
             // System.out.println("wait");
             try
             {
-                Thread.sleep(SLEEP_TIME);
+                Thread.sleep(WAIT_TIME);
             }
             catch (InterruptedException e)
             {
