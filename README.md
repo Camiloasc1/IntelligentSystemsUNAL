@@ -1,4 +1,5 @@
-Introducción a los sitemas inteligentes
+Introducción a los Sistemas Inteligentes
 =======================================
 
-Repositorio del proyecto para Introducción a los sistemas inteligentes con el profesor [Jonatan Gomez Perdomo](mailto:jgomezpe@unal.edu.co)
+Repositorio para Introducción a los Sistemas Inteligentes con el profesor [Jonatan Gomez Perdomo](mailto:jgomezpe@unal.edu.co)
+
